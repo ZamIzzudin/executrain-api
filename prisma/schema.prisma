@@ -1,0 +1,484 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(nanoid()) @db.VarChar(24)
+  username     String
+  display_name String?
+  password     String
+  role         Role     @default(ADMIN)
+  created_at   DateTime @default(now())
+
+  @@index([username])
+}
+
+model Article {
+  id               String        @id @db.VarChar(24)
+  title            String
+  slug             String        @unique
+  content          String
+  excerpt          String?
+  author           String        @default("Admin")
+  tags             String[]
+  featured_image   Json          @default("{\"url\": \"\", \"public_id\": \"\"}")
+  status           ArticleStatus @default(DRAFT)
+  views            Int           @default(0)
+  meta_title       String?
+  meta_description String?
+  meta_keywords    String[]
+  published_at     DateTime?
+  updated_at       DateTime      @default(now())
+  created_at       DateTime      @default(now())
+
+  @@index([created_at])
+  @@index([published_at])
+  @@index([status])
+}
+
+model Asset {
+  id                 String        @id @db.VarChar(24)
+  category           AssetCategory @unique
+  name               String
+  url                String
+  public_id          String        @default("")
+  fallback_url       String        @default("")
+  fallback_public_id String        @default("")
+  type               AssetType     @default(image)
+  is_active          Boolean       @default(true)
+  updated_at         DateTime      @default(now())
+  created_at         DateTime      @default(now())
+}
+
+model Attendance {
+  id         String   @id @db.VarChar(24)
+  name       String
+  status     String
+  source     String   @default("boardingpass")
+  created_at DateTime @default(now())
+
+  @@index([created_at])
+  @@index([status])
+}
+
+model Career {
+  id                     String            @id @db.VarChar(24)
+  title                  String
+  slug                   String            @unique
+  description            String[]
+  requirements           String[]
+  experiance_requirement String[]
+  applicant_question     String[]
+  location               String
+  department             String            @default("")
+  job_type               JobType           @default(FULL_TIME)
+  experience_level       ExperienceLevel   @default(MID)
+  vacancies              Int               @default(1)
+  contact_email          String            @default("")
+  deadline               DateTime?
+  status                 JobStatus         @default(DRAFT)
+  applicants_count       Int               @default(0)
+  updated_at             DateTime          @default(now())
+  created_at             DateTime          @default(now())
+  CareerApplicant        CareerApplicant[]
+
+  @@index([department])
+  @@index([location])
+  @@index([status])
+}
+
+model CareerApplicant {
+  id                String            @id @db.VarChar(24)
+  career_id         String            @db.VarChar(24)
+  full_name         String
+  email             String
+  phone             String
+  cover_letter      String?
+  resume            Json
+  portfolio_url     String?
+  linkedin_url      String?
+  github_url        String?
+  experience_years  Int               @default(0)
+  current_position  String?
+  current_company   String?
+  availability_date DateTime?
+  status            ApplicationStatus @default(PENDING)
+  notes             String?
+  applied_at        DateTime          @default(now())
+  updated_at        DateTime          @default(now())
+  Career            Career            @relation(fields: [career_id], references: [id], onDelete: Cascade)
+
+  @@index([career_id])
+  @@index([email])
+  @@index([status])
+}
+
+model CareerGallery {
+  id          String   @id @db.VarChar(24)
+  title       String
+  description String   @default("")
+  image       Json     @default("{\"url\": \"\", \"public_id\": \"\"}")
+  order       Int      @default(0)
+  is_active   Boolean  @default(true)
+  updated_at  DateTime @default(now())
+  created_at  DateTime @default(now())
+
+  @@index([is_active])
+  @@index([order])
+}
+
+model FreeTrialProduct {
+  id                         String              @id @db.VarChar(24)
+  product_name               String?
+  product_description        String?
+  max_participant            Int?
+  link                       String?
+  duration                   Int?
+  session_duration           Int?
+  benefits                   String[]
+  product_category           FreeTrialCategory
+  skill_level                SkillLevel          @default(BEGINNER)
+  language                   Language            @default(INDONESIA)
+  banner                     Json                @default("{\"url\": \"\", \"public_id\": \"\"}")
+  learning_path_banner       Json                @default("{\"url\": \"\", \"public_id\": \"\"}")
+  learning_path_redirect_url String              @default("")
+  updated_at                 DateTime            @default(now())
+  created_at                 DateTime            @default(now())
+  FreeTrialSchedule          FreeTrialSchedule[]
+
+  @@index([created_at])
+  @@index([product_category])
+}
+
+model FreeTrialSchedule {
+  id                               String           @id @db.VarChar(24)
+  schedule_name                    String?
+  schedule_description             String?
+  schedule_category                String?
+  schedule_date                    DateTime?
+  schedule_close_registration_date DateTime?
+  schedule_start                   String?
+  schedule_end                     String?
+  location                         String?
+  quota                            Int?
+  duration                         Int?
+  session_duration                 Int?
+  is_assestment                    Boolean?
+  status                           Availability     @default(OPEN_SEAT)
+  product_id                       String           @db.VarChar(24)
+  updated_at                       DateTime         @default(now())
+  created_at                       DateTime         @default(now())
+  FreeTrialProduct                 FreeTrialProduct @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@index([product_id])
+  @@index([schedule_date])
+  @@index([status])
+}
+
+model Gallery {
+  id         String   @id @db.VarChar(24)
+  title      String   @default("")
+  image      Json     @default("{\"url\": \"\", \"public_id\": \"\"}")
+  order      Int      @default(0)
+  is_active  Boolean  @default(true)
+  updated_at DateTime @default(now())
+  created_at DateTime @default(now())
+
+  @@index([is_active])
+  @@index([order])
+}
+
+model Metadata {
+  id                  String       @id @db.VarChar(24)
+  page                MetadataPage @unique
+  title               String
+  description         String
+  keywords            String[]
+  canonical_url       String?
+  og_title            String?
+  og_description      String?
+  og_image            String?
+  og_type             String       @default("website")
+  twitter_card        String       @default("summary_large_image")
+  twitter_title       String?
+  twitter_description String?
+  twitter_image       String?
+  author              String?
+  language            String       @default("id")
+  viewport            String       @default("width=device-width, initial-scale=1.0")
+  robots              Json         @default("{\"index\": true, \"follow\": true}")
+  json_ld             Json?
+  status              Status       @default(DRAFT)
+  updated_at          DateTime     @default(now())
+  created_at          DateTime     @default(now())
+}
+
+model MigrationMap {
+  id          Int      @id @default(autoincrement())
+  entity      String
+  mongo_id    String   @db.VarChar(24)
+  pg_id       String   @db.VarChar(24)
+  migrated_at DateTime @default(now())
+
+  @@unique([entity, mongo_id])
+  @@index([entity, pg_id])
+}
+
+model Page {
+  id         String   @id @db.VarChar(24)
+  name       String?
+  path       String?
+  type       PageType @default(Other)
+  status     Status   @default(DRAFT)
+  template   Json     @default("[]")
+  metadata   Json     @default("[]")
+  updated_at DateTime @default(now())
+  created_at DateTime @default(now())
+
+  @@index([path])
+  @@index([status])
+}
+
+model Partner {
+  id           String   @id @db.VarChar(24)
+  partner_name String?
+  logo         Json     @default("{\"url\": \"\", \"public_id\": \"\"}")
+  updated_at   DateTime @default(now())
+  created_at   DateTime @default(now())
+}
+
+model Product {
+  id                         String          @id @db.VarChar(24)
+  product_name               String?
+  product_description        String?
+  max_participant            Int?
+  link                       String?
+  duration                   Int?
+  session_duration           Int?
+  benefits                   String[]
+  product_category           ProductCategory @default(IT_TRAINING)
+  skill_level                SkillLevel      @default(BEGINNER)
+  language                   Language        @default(INDONESIA)
+  banner                     Json            @default("{\"url\": \"\", \"public_id\": \"\"}")
+  learning_path_banner       Json            @default("{\"url\": \"\", \"public_id\": \"\"}")
+  learning_path_redirect_url String          @default("")
+  updated_at                 DateTime        @default(now())
+  created_at                 DateTime        @default(now())
+  Schedule                   Schedule[]
+
+  @@index([created_at])
+  @@index([product_category])
+}
+
+model Promo {
+  id                String    @id @db.VarChar(24)
+  promo_name        String?
+  promo_description String?
+  percentage        Int?
+  end_date          DateTime?
+  link              String?
+  is_active         Boolean   @default(false)
+  banner            Json      @default("{\"url\": \"\", \"public_id\": \"\"}")
+  updated_at        DateTime  @default(now())
+  created_at        DateTime  @default(now())
+
+  @@index([end_date])
+  @@index([is_active])
+}
+
+model Schedule {
+  id                               String       @id @db.VarChar(24)
+  schedule_name                    String?
+  schedule_description             String?
+  schedule_category                String?
+  schedule_date                    DateTime?
+  schedule_close_registration_date DateTime?
+  schedule_start                   String?
+  schedule_end                     String?
+  location                         String?
+  quota                            Int?
+  duration                         Int?
+  session_duration                 Int?
+  is_assestment                    Boolean?
+  status                           Availability @default(OPEN_SEAT)
+  product_id                       String       @db.VarChar(24)
+  updated_at                       DateTime     @default(now())
+  created_at                       DateTime     @default(now())
+  Product                          Product      @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@index([product_id])
+  @@index([schedule_date])
+  @@index([status])
+}
+
+model Service {
+  id                  String   @id @db.VarChar(24)
+  service_name        String?
+  service_description String?
+  slug                String   @unique
+  logo                Json     @default("{\"url\": \"\", \"public_id\": \"\"}")
+  picture             Json     @default("{\"url\": \"\", \"public_id\": \"\"}")
+  updated_at          DateTime @default(now())
+  created_at          DateTime @default(now())
+}
+
+model Socmed {
+  id          String   @id @db.VarChar(24)
+  socmed_name String?
+  socmed_link String?
+  logo        Json     @default("{\"url\": \"\", \"public_id\": \"\"}")
+  updated_at  DateTime @default(now())
+  created_at  DateTime @default(now())
+}
+
+model Statistic {
+  id                       String   @id @db.VarChar(24)
+  year_experience          Int?
+  total_participant        Int?
+  total_topic_class        Int?
+  total_training_completed Int?
+  updated_at               DateTime @default(now())
+  created_at               DateTime @default(now())
+}
+
+model Testimonial {
+  id           String   @id @db.VarChar(24)
+  person_name  String?
+  person_title String?
+  testimonial  String?
+  photo        Json     @default("{\"url\": \"\", \"public_id\": \"\"}")
+  updated_at   DateTime @default(now())
+  created_at   DateTime @default(now())
+}
+
+enum Role {
+  SUPERADMIN
+  ADMIN
+}
+
+enum ApplicationStatus {
+  PENDING
+  UNDER_REVIEW
+  SHORTLISTED
+  INTERVIEW
+  REJECTED
+  HIRED
+}
+
+enum ArticleCategory {
+  GENERAL
+  IT_TRAINING
+  IT_CONSULTANT
+  CAREER_TIPS
+  INDUSTRY_NEWS
+}
+
+enum ArticleStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum AssetCategory {
+  hero_background
+  hero_video
+  about_image
+  statistic_background
+  steps_background
+  services_image
+  cta_schedule_image
+  contact_image
+  framework_banner
+  hero_blog
+  hero_career
+  hero_contact
+  hero_free_trial
+  hero_product
+  hero_schedule
+  hero_service
+}
+
+enum AssetType {
+  image
+  video
+}
+
+enum Availability {
+  FULL_BOOKED
+  OPEN_SEAT
+}
+
+enum ExperienceLevel {
+  ENTRY
+  MID
+  SENIOR
+  LEAD
+  EXECUTIVE
+}
+
+enum FreeTrialCategory {
+  DATA_ANALYTICS
+  AUTOMATION
+  CYBERSECURITY
+  PROJECT_MANAGEMENT
+  EMOTIONAL_INTELLIGENCE
+}
+
+enum JobStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+  ARCHIVED
+}
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+  FREELANCE
+}
+
+enum Language {
+  INDONESIA
+  INGGRIS
+}
+
+enum MetadataPage {
+  home
+  about
+  contact
+  product
+  schedule
+  service
+  STRATEGIC_SOLUTION
+}
+
+enum PageType {
+  Other
+  Schedule
+  Strategic_Solution
+  About_Us
+}
+
+enum ProductCategory {
+  IT_TRAINING
+  IT_CONSULTANT
+  IT_SUPPORT
+}
+
+enum SkillLevel {
+  BEGINNER
+  INTERMEDIATE
+  EXPERT
+  ALL_LEVEL
+}
+
+enum Status {
+  DRAFT
+  PUBLISHED
+}

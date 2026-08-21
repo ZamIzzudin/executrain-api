@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Build
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Local Postgres dev cluster (inisiasi manual via scripts)
+scripts/pgdata/
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
