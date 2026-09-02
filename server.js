@@ -53,6 +53,8 @@ app.use(bodyParser.json());
 app.use(
   fileUpload({
     uploadTimeout: 60000,
+    useTempFiles: true,
+    limits: { fileSize: 5 * 1024 * 1024 }, // limit request (file > 2MB ditolak di handler)
   }),
 );
 

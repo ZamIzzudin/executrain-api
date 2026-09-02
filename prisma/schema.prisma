@@ -17,31 +17,124 @@ model User {
   @@index([username])
 }
 
-model Article {
-  id               String        @id @db.VarChar(24)
-  title            String
-  slug             String        @unique
-  content          String
-  excerpt          String?
-  author           String        @default("Admin")
-  tags             String[]
-  featured_image   Json          @default("{\"url\": \"\", \"public_id\": \"\"}")
-  status           ArticleStatus @default(DRAFT)
-  views            Int           @default(0)
-  meta_title       String?
-  meta_description String?
-  meta_keywords    String[]
-  published_at     DateTime?
-  updated_at       DateTime      @default(now())
-  created_at       DateTime      @default(now())
+model SkillAccelerator {
+  id          String                    @id @default(nanoid()) @db.VarChar(24)
+  title       String
+  banner      Json                      @default("{\"url\": \"\", \"public_id\": \"\"}")
+  category    String
+  description String
+  student     Int                       @default(0)
+  duration    Int                       @default(0)
+  skill_level SkillAcceleratorLevel     @default(BEGINNER)
+  language    SkillAcceleratorLanguage  @default(INDONESIA)
+  feature     String[]
+  updated_at  DateTime                  @default(now())
+  created_at  DateTime                  @default(now())
 
+  @@index([category])
   @@index([created_at])
-  @@index([published_at])
-  @@index([status])
 }
 
+model Course {
+  id             String        @id @default(nanoid()) @db.VarChar(24)
+  title          String
+  banner         Json          @default("{\"url\": \"\", \"public_id\": \"\"}")
+  category       String
+  description    String
+  student        Int           @default(0)
+  duration       Int           @default(0)
+  skill_level    CourseLevel   @default(BEGINNER)
+  language       CourseLanguage @default(INDONESIA)
+  framework_type String        @default("Training")
+  feature        String[]
+  updated_at     DateTime      @default(now())
+  created_at     DateTime      @default(now())
+
+  @@index([category])
+  @@index([created_at])
+}
+
+model MasterData {
+  id         String   @id @default(nanoid()) @db.VarChar(24)
+  type       String
+  label      String
+  value      String
+  sort_order Int      @default(0)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+
+  @@unique([type, value])
+  @@index([type, sort_order])
+}
+
+model ITProduct {
+  id          String   @id @default(nanoid()) @db.VarChar(24)
+  title       String
+  description String
+  banner      Json     @default("{\"url\": \"\", \"public_id\": \"\"}")
+  tech_stack  String[]
+  link        String?
+  problem     String?
+  feature     String[]
+  compliance  String?
+  highlight   Json     @default("[]")
+  updated_at  DateTime @default(now())
+  created_at  DateTime @default(now())
+
+  @@index([created_at])
+}
+
+model AppDevelopment {
+  id          String   @id @default(nanoid()) @db.VarChar(24)
+  title       String
+  tech_stack  String[]
+  description String
+  challenge   String?
+  team_size   Json     @default("[]")
+  timeline    Int      @default(0)
+  methodology String?
+  compliance  String?
+  highlights  Json     @default("[]")
+  updated_at  DateTime @default(now())
+  created_at  DateTime @default(now())
+
+  @@index([created_at])
+}
+
+model CaseStudy {
+  id              String   @id @default(nanoid()) @db.VarChar(24)
+  title           String
+  category        String?
+  description     String
+  industries      String[]
+  solutions       String[]
+  deployment_type String?
+  timeline        Int      @default(0)
+  compliance      String?
+  methodology     String?
+  team_size       Json     @default("[]")
+  testimonial     Json     @default("{\"testimoni\": \"\", \"name\": \"\", \"company\": \"\"}")
+  link            String?
+  updated_at      DateTime @default(now())
+  created_at      DateTime @default(now())
+
+  @@index([created_at])
+}
+
+model Article {
+  id         String   @id @default(nanoid()) @db.VarChar(24)
+  title      String
+  category   String[]
+  content    String   @db.Text
+  updated_at DateTime @default(now())
+  created_at DateTime @default(now())
+
+  @@index([created_at])
+}
+
+/// Content Management: Asset
 model Asset {
-  id                 String        @id @db.VarChar(24)
+  id                 String        @id @default(nanoid()) @db.VarChar(24)
   category           AssetCategory @unique
   name               String
   url                String
@@ -54,51 +147,53 @@ model Asset {
   created_at         DateTime      @default(now())
 }
 
-model Attendance {
-  id         String   @id @db.VarChar(24)
-  name       String
-  status     String
-  source     String   @default("boardingpass")
-  created_at DateTime @default(now())
-
-  @@index([created_at])
-  @@index([status])
+/// Content Management: Partner
+model Partner {
+  id           String   @id @default(nanoid()) @db.VarChar(24)
+  partner_name String?
+  logo         Json     @default("{\"public_id\":\"\",\"url\":\"\"}")
+  updated_at   DateTime @default(now())
+  created_at   DateTime @default(now())
 }
 
+/// Content Management: Career
 model Career {
-  id                     String            @id @db.VarChar(24)
+  id                     String          @id @default(nanoid()) @db.VarChar(24)
   title                  String
-  slug                   String            @unique
+  slug                   String          @unique
   description            String[]
   requirements           String[]
   experiance_requirement String[]
   applicant_question     String[]
   location               String
-  department             String            @default("")
-  job_type               JobType           @default(FULL_TIME)
-  experience_level       ExperienceLevel   @default(MID)
-  vacancies              Int               @default(1)
-  contact_email          String            @default("")
+  department             String          @default("")
+  job_type               JobType         @default(FULL_TIME)
+  experience_level       ExperienceLevel @default(MID)
+  vacancies              Int             @default(1)
+  contact_email          String          @default("")
   deadline               DateTime?
-  status                 JobStatus         @default(DRAFT)
-  applicants_count       Int               @default(0)
-  updated_at             DateTime          @default(now())
-  created_at             DateTime          @default(now())
-  CareerApplicant        CareerApplicant[]
+  status                 JobStatus       @default(DRAFT)
+  applicants_count       Int             @default(0)
+  views                  Int             @default(0)
+  updated_at             DateTime        @default(now())
+  created_at             DateTime        @default(now())
 
+  applicants CareerApplicant[]
+
+  @@index([status])
   @@index([department])
   @@index([location])
-  @@index([status])
 }
 
+/// Content Management: CareerApplicant
 model CareerApplicant {
-  id                String            @id @db.VarChar(24)
+  id                String            @id @default(nanoid()) @db.VarChar(24)
   career_id         String            @db.VarChar(24)
   full_name         String
   email             String
   phone             String
   cover_letter      String?
-  resume            Json
+  resume            Json              @default("{}")
   portfolio_url     String?
   linkedin_url      String?
   github_url        String?
@@ -110,233 +205,56 @@ model CareerApplicant {
   notes             String?
   applied_at        DateTime          @default(now())
   updated_at        DateTime          @default(now())
-  Career            Career            @relation(fields: [career_id], references: [id], onDelete: Cascade)
+
+  career Career @relation(fields: [career_id], references: [id], onDelete: Cascade)
 
   @@index([career_id])
   @@index([email])
   @@index([status])
 }
 
+/// Content Management: CareerGallery
 model CareerGallery {
-  id          String   @id @db.VarChar(24)
+  id          String   @id @default(nanoid()) @db.VarChar(24)
   title       String
   description String   @default("")
-  image       Json     @default("{\"url\": \"\", \"public_id\": \"\"}")
+  image       Json     @default("{\"public_id\":\"\",\"url\":\"\"}")
   order       Int      @default(0)
   is_active   Boolean  @default(true)
   updated_at  DateTime @default(now())
   created_at  DateTime @default(now())
 
-  @@index([is_active])
   @@index([order])
+  @@index([is_active])
 }
 
-model FreeTrialProduct {
-  id                         String              @id @db.VarChar(24)
-  product_name               String?
-  product_description        String?
-  max_participant            Int?
-  link                       String?
-  duration                   Int?
-  session_duration           Int?
-  benefits                   String[]
-  product_category           FreeTrialCategory
-  skill_level                SkillLevel          @default(BEGINNER)
-  language                   Language            @default(INDONESIA)
-  banner                     Json                @default("{\"url\": \"\", \"public_id\": \"\"}")
-  learning_path_banner       Json                @default("{\"url\": \"\", \"public_id\": \"\"}")
-  learning_path_redirect_url String              @default("")
-  updated_at                 DateTime            @default(now())
-  created_at                 DateTime            @default(now())
-  FreeTrialSchedule          FreeTrialSchedule[]
-
-  @@index([created_at])
-  @@index([product_category])
-}
-
-model FreeTrialSchedule {
-  id                               String           @id @db.VarChar(24)
-  schedule_name                    String?
-  schedule_description             String?
-  schedule_category                String?
-  schedule_date                    DateTime?
-  schedule_close_registration_date DateTime?
-  schedule_start                   String?
-  schedule_end                     String?
-  location                         String?
-  quota                            Int?
-  duration                         Int?
-  session_duration                 Int?
-  is_assestment                    Boolean?
-  status                           Availability     @default(OPEN_SEAT)
-  product_id                       String           @db.VarChar(24)
-  updated_at                       DateTime         @default(now())
-  created_at                       DateTime         @default(now())
-  FreeTrialProduct                 FreeTrialProduct @relation(fields: [product_id], references: [id], onDelete: Cascade)
-
-  @@index([product_id])
-  @@index([schedule_date])
-  @@index([status])
-}
-
+/// Content Management: Gallery
 model Gallery {
-  id         String   @id @db.VarChar(24)
+  id         String   @id @default(nanoid()) @db.VarChar(24)
   title      String   @default("")
-  image      Json     @default("{\"url\": \"\", \"public_id\": \"\"}")
+  image      Json     @default("{\"public_id\":\"\",\"url\":\"\"}")
   order      Int      @default(0)
   is_active  Boolean  @default(true)
   updated_at DateTime @default(now())
   created_at DateTime @default(now())
 
-  @@index([is_active])
   @@index([order])
-}
-
-model Metadata {
-  id                  String       @id @db.VarChar(24)
-  page                MetadataPage @unique
-  title               String
-  description         String
-  keywords            String[]
-  canonical_url       String?
-  og_title            String?
-  og_description      String?
-  og_image            String?
-  og_type             String       @default("website")
-  twitter_card        String       @default("summary_large_image")
-  twitter_title       String?
-  twitter_description String?
-  twitter_image       String?
-  author              String?
-  language            String       @default("id")
-  viewport            String       @default("width=device-width, initial-scale=1.0")
-  robots              Json         @default("{\"index\": true, \"follow\": true}")
-  json_ld             Json?
-  status              Status       @default(DRAFT)
-  updated_at          DateTime     @default(now())
-  created_at          DateTime     @default(now())
-}
-
-model MigrationMap {
-  id          Int      @id @default(autoincrement())
-  entity      String
-  mongo_id    String   @db.VarChar(24)
-  pg_id       String   @db.VarChar(24)
-  migrated_at DateTime @default(now())
-
-  @@unique([entity, mongo_id])
-  @@index([entity, pg_id])
-}
-
-model Page {
-  id         String   @id @db.VarChar(24)
-  name       String?
-  path       String?
-  type       PageType @default(Other)
-  status     Status   @default(DRAFT)
-  template   Json     @default("[]")
-  metadata   Json     @default("[]")
-  updated_at DateTime @default(now())
-  created_at DateTime @default(now())
-
-  @@index([path])
-  @@index([status])
-}
-
-model Partner {
-  id           String   @id @db.VarChar(24)
-  partner_name String?
-  logo         Json     @default("{\"url\": \"\", \"public_id\": \"\"}")
-  updated_at   DateTime @default(now())
-  created_at   DateTime @default(now())
-}
-
-model Product {
-  id                         String          @id @db.VarChar(24)
-  product_name               String?
-  product_description        String?
-  max_participant            Int?
-  link                       String?
-  duration                   Int?
-  session_duration           Int?
-  benefits                   String[]
-  product_category           ProductCategory @default(IT_TRAINING)
-  skill_level                SkillLevel      @default(BEGINNER)
-  language                   Language        @default(INDONESIA)
-  banner                     Json            @default("{\"url\": \"\", \"public_id\": \"\"}")
-  learning_path_banner       Json            @default("{\"url\": \"\", \"public_id\": \"\"}")
-  learning_path_redirect_url String          @default("")
-  updated_at                 DateTime        @default(now())
-  created_at                 DateTime        @default(now())
-  Schedule                   Schedule[]
-
-  @@index([created_at])
-  @@index([product_category])
-}
-
-model Promo {
-  id                String    @id @db.VarChar(24)
-  promo_name        String?
-  promo_description String?
-  percentage        Int?
-  end_date          DateTime?
-  link              String?
-  is_active         Boolean   @default(false)
-  banner            Json      @default("{\"url\": \"\", \"public_id\": \"\"}")
-  updated_at        DateTime  @default(now())
-  created_at        DateTime  @default(now())
-
-  @@index([end_date])
   @@index([is_active])
 }
 
-model Schedule {
-  id                               String       @id @db.VarChar(24)
-  schedule_name                    String?
-  schedule_description             String?
-  schedule_category                String?
-  schedule_date                    DateTime?
-  schedule_close_registration_date DateTime?
-  schedule_start                   String?
-  schedule_end                     String?
-  location                         String?
-  quota                            Int?
-  duration                         Int?
-  session_duration                 Int?
-  is_assestment                    Boolean?
-  status                           Availability @default(OPEN_SEAT)
-  product_id                       String       @db.VarChar(24)
-  updated_at                       DateTime     @default(now())
-  created_at                       DateTime     @default(now())
-  Product                          Product      @relation(fields: [product_id], references: [id], onDelete: Cascade)
-
-  @@index([product_id])
-  @@index([schedule_date])
-  @@index([status])
-}
-
-model Service {
-  id                  String   @id @db.VarChar(24)
-  service_name        String?
-  service_description String?
-  slug                String   @unique
-  logo                Json     @default("{\"url\": \"\", \"public_id\": \"\"}")
-  picture             Json     @default("{\"url\": \"\", \"public_id\": \"\"}")
-  updated_at          DateTime @default(now())
-  created_at          DateTime @default(now())
-}
-
+/// Content Management: Socmed
 model Socmed {
-  id          String   @id @db.VarChar(24)
+  id          String   @id @default(nanoid()) @db.VarChar(24)
   socmed_name String?
   socmed_link String?
-  logo        Json     @default("{\"url\": \"\", \"public_id\": \"\"}")
+  logo        Json     @default("{\"public_id\":\"\",\"url\":\"\"}")
   updated_at  DateTime @default(now())
   created_at  DateTime @default(now())
 }
 
+/// Content Management: Statistic
 model Statistic {
-  id                       String   @id @db.VarChar(24)
+  id                       String   @id @default(nanoid()) @db.VarChar(24)
   year_experience          Int?
   total_participant        Int?
   total_topic_class        Int?
@@ -345,42 +263,15 @@ model Statistic {
   created_at               DateTime @default(now())
 }
 
+/// Content Management: Testimonial
 model Testimonial {
-  id           String   @id @db.VarChar(24)
+  id           String   @id @default(nanoid()) @db.VarChar(24)
   person_name  String?
   person_title String?
   testimonial  String?
-  photo        Json     @default("{\"url\": \"\", \"public_id\": \"\"}")
+  photo        Json     @default("{\"public_id\":\"\",\"url\":\"\"}")
   updated_at   DateTime @default(now())
   created_at   DateTime @default(now())
-}
-
-enum Role {
-  SUPERADMIN
-  ADMIN
-}
-
-enum ApplicationStatus {
-  PENDING
-  UNDER_REVIEW
-  SHORTLISTED
-  INTERVIEW
-  REJECTED
-  HIRED
-}
-
-enum ArticleCategory {
-  GENERAL
-  IT_TRAINING
-  IT_CONSULTANT
-  CAREER_TIPS
-  INDUSTRY_NEWS
-}
-
-enum ArticleStatus {
-  DRAFT
-  PUBLISHED
-  ARCHIVED
 }
 
 enum AssetCategory {
@@ -407,9 +298,12 @@ enum AssetType {
   video
 }
 
-enum Availability {
-  FULL_BOOKED
-  OPEN_SEAT
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+  FREELANCE
 }
 
 enum ExperienceLevel {
@@ -420,14 +314,6 @@ enum ExperienceLevel {
   EXECUTIVE
 }
 
-enum FreeTrialCategory {
-  DATA_ANALYTICS
-  AUTOMATION
-  CYBERSECURITY
-  PROJECT_MANAGEMENT
-  EMOTIONAL_INTELLIGENCE
-}
-
 enum JobStatus {
   DRAFT
   PUBLISHED
@@ -435,50 +321,40 @@ enum JobStatus {
   ARCHIVED
 }
 
-enum JobType {
-  FULL_TIME
-  PART_TIME
-  CONTRACT
-  INTERNSHIP
-  FREELANCE
+enum ApplicationStatus {
+  PENDING
+  UNDER_REVIEW
+  SHORTLISTED
+  INTERVIEW
+  REJECTED
+  HIRED
 }
 
-enum Language {
-  INDONESIA
-  INGGRIS
+enum Role {
+  SUPERADMIN
+  ADMIN
 }
 
-enum MetadataPage {
-  home
-  about
-  contact
-  product
-  schedule
-  service
-  STRATEGIC_SOLUTION
-}
-
-enum PageType {
-  Other
-  Schedule
-  Strategic_Solution
-  About_Us
-}
-
-enum ProductCategory {
-  IT_TRAINING
-  IT_CONSULTANT
-  IT_SUPPORT
-}
-
-enum SkillLevel {
+enum SkillAcceleratorLevel {
   BEGINNER
   INTERMEDIATE
+  ADVANCED
   EXPERT
-  ALL_LEVEL
 }
 
-enum Status {
-  DRAFT
-  PUBLISHED
+enum SkillAcceleratorLanguage {
+  INDONESIA
+  ENGLISH
+}
+
+enum CourseLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+enum CourseLanguage {
+  INDONESIA
+  ENGLISH
 }
