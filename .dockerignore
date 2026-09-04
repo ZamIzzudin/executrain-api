@@ -9,3 +9,6 @@ Dockerfile
 .dockerignore
 README.md
 .vscode
+
+# Temp upload files (express-fileupload local)
+tmp

@@ -32,6 +32,12 @@ WORKDIR /app
 # Non-root user (best practice)
 RUN groupadd --system app && useradd --system --gid app app
 
+# Direktori temp utk express-fileupload (useTempFiles) & proses kompresi.
+# Default express-fileupload = /app/tmp, tapi folder ini tidak ada di image
+# dan user non-root tak bisa buat di /app. Sediakan + beri hak milik ke app.
+# (server.js juga sudah set tempFileDir ke os.tmpdir() sebagai lapisan pertama.)
+RUN mkdir -p /app/tmp && chown app:app /app/tmp
+
 # Copy dependencies (node_modules lengkap dari build stage)
 COPY --from=build --chown=app:app /app/node_modules ./node_modules
 

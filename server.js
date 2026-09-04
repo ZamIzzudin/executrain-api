@@ -1,5 +1,6 @@
 /** @format */
 
+const os = require("os");
 const express = require("express");
 const { createServer } = require("http");
 const cors = require("cors");
@@ -54,6 +55,9 @@ app.use(
   fileUpload({
     uploadTimeout: 60000,
     useTempFiles: true,
+    // Pakai /tmp OS (selalu writable utk semua user), bukan default /app/tmp
+    // yg tidak ada & tidak writable saat container jalan sebagai non-root (USER app).
+    tempFileDir: os.tmpdir(),
     limits: { fileSize: 5 * 1024 * 1024 }, // limit request (file > 2MB ditolak di handler)
   }),
 );
