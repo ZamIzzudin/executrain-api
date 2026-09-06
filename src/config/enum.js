@@ -1,5 +1,6 @@
 /** @format */
 
+// Role bawaan (nama role di tabel "Role"). Role tambahan bisa dibuat via RBAC.
 const ROLE = {
   SUPERADMIN: "SUPERADMIN",
   ADMIN: "ADMIN",

@@ -11,10 +11,57 @@ model User {
   username     String
   display_name String?
   password     String
-  role         Role     @default(ADMIN)
+  role_id      String   @db.VarChar(24)
+  role         Role     @relation(fields: [role_id], references: [id])
   created_at   DateTime @default(now())
 
   @@index([username])
+  @@index([role_id])
+}
+
+/// RBAC: Role (peran pengguna CMS)
+model Role {
+  id          String   @id @default(nanoid()) @db.VarChar(24)
+  name        String   @unique
+  description String?
+  is_system   Boolean  @default(false)
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now())
+
+  users       User[]
+  permissions RoleMenu[]
+}
+
+/// RBAC: Menu (item navigasi CMS, tersedia utk di-assign ke role)
+model Menu {
+  id          String   @id @default(nanoid()) @db.VarChar(24)
+  code        String   @unique
+  label       String
+  path        String?
+  icon        String?
+  parent_code String?
+  sort_order  Int      @default(0)
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now())
+
+  permissions RoleMenu[]
+
+  @@index([parent_code])
+  @@index([sort_order])
+}
+
+/// RBAC: relasi Role-Menu (menu yang boleh diakses role)
+model RoleMenu {
+  role_id String @db.VarChar(24)
+  menu_id String @db.VarChar(24)
+
+  role Role @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  menu Menu @relation(fields: [menu_id], references: [id], onDelete: Cascade)
+
+  @@id([role_id, menu_id])
+  @@index([menu_id])
 }
 
 model SkillAccelerator {
@@ -274,6 +321,22 @@ model Testimonial {
   created_at   DateTime @default(now())
 }
 
+/// Pages: konten halaman statis (About, dsb.) untuk compro.
+/// Satu baris per halaman, diidentifikasi via `code` (mis. "about").
+/// `content` menyimpan JSON utuh sesuai struktur halaman (copywriting,
+/// array awards/join steps, CTA, dll).
+model PageContent {
+  id         String   @id @default(nanoid()) @db.VarChar(24)
+  code       String   @unique
+  title      String   @default("")
+  content    Json     @default("{}")
+  is_active  Boolean  @default(true)
+  updated_at DateTime @default(now())
+  created_at DateTime @default(now())
+
+  @@index([is_active])
+}
+
 enum AssetCategory {
   hero_background
   hero_video
@@ -328,11 +391,6 @@ enum ApplicationStatus {
   INTERVIEW
   REJECTED
   HIRED
-}
-
-enum Role {
-  SUPERADMIN
-  ADMIN
 }
 
 enum SkillAcceleratorLevel {

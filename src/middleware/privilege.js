@@ -36,4 +36,20 @@ const islogin = (req, res, next) => {
   }
 };
 
-module.exports = { islogin };
+/**
+ * Proteksi khusus SUPERADMIN. Harus dipasang SETELAH islogin.
+ * Hanya role SUPERADMIN dari token JWT yang boleh lanjut.
+ */
+const isSuperAdmin = (req, res, next) => {
+  const role = req.token?.role;
+  if (role !== "SUPERADMIN") {
+    return res.status(403).json({
+      status: 403,
+      message: "failed",
+      info: "forbidden, super admin only",
+    });
+  }
+  next();
+};
+
+module.exports = { islogin, isSuperAdmin };

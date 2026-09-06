@@ -30,6 +30,8 @@ const testimonial = require("./testimonial");
 const contact = require("./contact");
 const scheduleRegistration = require("./schedule-registration");
 const productInquiry = require("./product-inquiry");
+const access = require("./access");
+const page = require("./page");
 
 // Health check koneksi PostgreSQL
 routes.use("/health", health);
@@ -54,5 +56,7 @@ routes.use("/testimonial", testimonial);
 routes.use("/contact", contact);
 routes.use("/schedule-registration", scheduleRegistration);
 routes.use("/product-inquiry", productInquiry);
+routes.use("/access", access);
+routes.use("/page", page);
 
 module.exports = routes;

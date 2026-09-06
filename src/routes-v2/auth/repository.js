@@ -17,7 +17,12 @@ const selectSafe = {
   id: true,
   username: true,
   display_name: true,
-  role: true,
+  role: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
   created_at: true,
 };
 
@@ -26,10 +31,36 @@ const AuthRepository = {
     return prisma.user.count();
   },
 
+  // Resolve id role dari nama (utk genesis/register default)
+  findRoleIdByName(name) {
+    return prisma.role.findUnique({
+      where: { name },
+      select: { id: true },
+    });
+  },
+
+  // Validasi role id ada
+  findRoleById(id) {
+    return prisma.role.findUnique({
+      where: { id },
+      select: { id: true, name: true },
+    });
+  },
+
   findById(id) {
     return prisma.user.findUnique({
       where: { id },
-      select: selectSafe,
+      select: {
+        id: true,
+        username: true,
+        display_name: true,
+        password: true,
+        role_id: true,
+        role: {
+          select: { id: true, name: true },
+        },
+        created_at: true,
+      },
     });
   },
 
@@ -37,6 +68,11 @@ const AuthRepository = {
     // username bukan unique di schema, gunakan findFirst
     return prisma.user.findFirst({
       where: { username },
+      include: {
+        role: {
+          select: { id: true, name: true },
+        },
+      },
     });
   },
 
@@ -53,13 +89,33 @@ const AuthRepository = {
   },
 
   findAll() {
-    return prisma.user.findMany({ select: selectSafe });
+    return prisma.user.findMany({
+      select: {
+        id: true,
+        username: true,
+        display_name: true,
+        role_id: true,
+        role: {
+          select: { id: true, name: true },
+        },
+        created_at: true,
+      },
+    });
   },
 
-  create({ username, display_name, role, password }) {
+  create({ username, display_name, role_id, password }) {
     return prisma.user.create({
-      data: { username, display_name, role, password },
-      select: selectSafe,
+      data: { username, display_name, role_id, password },
+      select: {
+        id: true,
+        username: true,
+        display_name: true,
+        role_id: true,
+        role: {
+          select: { id: true, name: true },
+        },
+        created_at: true,
+      },
     });
   },
 
@@ -67,7 +123,16 @@ const AuthRepository = {
     return prisma.user.update({
       where: { id },
       data,
-      select: selectSafe,
+      select: {
+        id: true,
+        username: true,
+        display_name: true,
+        role_id: true,
+        role: {
+          select: { id: true, name: true },
+        },
+        created_at: true,
+      },
     });
   },
 

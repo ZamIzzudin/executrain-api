@@ -14,7 +14,14 @@ const {
 } = require("../../lib/jwt");
 
 const { GENESIS_PASSWORD } = require("../../config/var");
-const { ROLE, RefreshToken } = require("../../config/enum");
+const { RefreshToken } = require("../../config/enum");
+
+/** Ambil role name dari relasi user.role (object {id, name}). */
+const roleNameOf = (user) =>
+  (user && user.role && (user.role.name || user.role)) || "ADMIN";
+
+const SUPERADMIN_NAME = "SUPERADMIN";
+const ADMIN_NAME = "ADMIN";
 
 const genesis = async (req, res) => {
   try {
@@ -27,17 +34,25 @@ const genesis = async (req, res) => {
       });
     }
 
+    const superRole = await AuthRepository.findRoleIdByName(SUPERADMIN_NAME);
+    if (!superRole) {
+      return res.status(500).json({
+        status: 500,
+        message: "SUPERADMIN role not found, run RBAC setup first",
+      });
+    }
+
     const encrypted_password = await encrpyt_one_way(GENESIS_PASSWORD);
 
     const user = await AuthRepository.create({
       username: "SUPER",
       display_name: "SUPER",
-      role: ROLE.SUPERADMIN,
+      role_id: superRole.id,
       password: encrypted_password,
     });
 
-    const access_token = create_access_token(user.id, ROLE.SUPERADMIN);
-    const refresh_token = create_refresh_token(user.id, ROLE.SUPERADMIN);
+    const access_token = create_access_token(user.id, SUPERADMIN_NAME);
+    const refresh_token = create_refresh_token(user.id, SUPERADMIN_NAME);
 
     res.cookie(RefreshToken, refresh_token, {
       expires: new Date(Date.now() + 1000 * 60 * 60 * 24),
@@ -52,7 +67,8 @@ const genesis = async (req, res) => {
       id: user.id,
       username: user.username,
       display_name: user.display_name,
-      role: ROLE.SUPERADMIN,
+      role: SUPERADMIN_NAME,
+      role_id: superRole.id,
       access_token,
     });
   } catch (err) {
@@ -79,7 +95,8 @@ const me = async (req, res) => {
       id: user.id,
       username: user.username,
       display_name: user.display_name,
-      role: user.role,
+      role: roleNameOf(user),
+      role_id: user.role_id,
       access_token: token.token,
     });
   } catch (error) {
@@ -109,7 +126,8 @@ const login = async (req, res) => {
       });
     }
 
-    const access_token = create_access_token(user.id, user.role);
+    const roleName = roleNameOf(user);
+    const access_token = create_access_token(user.id, roleName);
 
     return res.status(200).json({
       status: 200,
@@ -117,7 +135,8 @@ const login = async (req, res) => {
       id: user.id,
       username: user.username,
       display_name: user.display_name,
-      role: user.role,
+      role: roleName,
+      role_id: user.role_id,
       access_token,
     });
   } catch (err) {
@@ -183,8 +202,7 @@ const user_list = async (req, res) => {
 };
 
 const register = async (req, res) => {
-  const { password, display_name, username } = req.body;
-  const role = ROLE.ADMIN;
+  const { password, display_name, username, role_id } = req.body;
 
   try {
     const existing = await AuthRepository.findByUsername(username);
@@ -195,16 +213,38 @@ const register = async (req, res) => {
       });
     }
 
+    // Default role: ADMIN. Bisa di-override dgn role_id (dari form Users).
+    let targetRoleId = role_id;
+    if (!targetRoleId) {
+      const adminRole = await AuthRepository.findRoleIdByName(ADMIN_NAME);
+      if (!adminRole) {
+        return res.status(500).json({
+          status: 500,
+          message: "ADMIN role not found, run RBAC setup first",
+        });
+      }
+      targetRoleId = adminRole.id;
+    } else {
+      const role = await AuthRepository.findRoleById(targetRoleId);
+      if (!role) {
+        return res.status(400).json({
+          status: 400,
+          message: "role not found",
+        });
+      }
+    }
+
     const encrypted_password = await encrpyt_one_way(password);
     const new_user = await AuthRepository.create({
       username,
       display_name,
-      role,
+      role_id: targetRoleId,
       password: encrypted_password,
     });
 
-    const access_token = create_access_token(new_user.id, role);
-    const refresh_token = create_refresh_token(new_user.id, role);
+    const roleName = roleNameOf(new_user);
+    const access_token = create_access_token(new_user.id, roleName);
+    const refresh_token = create_refresh_token(new_user.id, roleName);
 
     res.cookie(RefreshToken, refresh_token, {
       expires: new Date(Date.now() + 1000 * 60 * 60 * 24),
@@ -220,7 +260,8 @@ const register = async (req, res) => {
         id: new_user.id,
         username: new_user.username,
         display_name: new_user.display_name,
-        role,
+        role: roleName,
+        role_id: new_user.role_id,
         access_token,
       },
     });
@@ -235,7 +276,12 @@ const register = async (req, res) => {
 
 const adjust = async (req, res) => {
   const { id } = req.params;
-  const { username = null, display_name = null, password = null } = req.body;
+  const {
+    username = null,
+    display_name = null,
+    password = null,
+    role_id = null,
+  } = req.body;
 
   try {
     const updateData = {
@@ -245,6 +291,17 @@ const adjust = async (req, res) => {
 
     if (password && password.trim() !== "") {
       updateData.password = await encrpyt_one_way(password);
+    }
+
+    if (role_id) {
+      const role = await AuthRepository.findRoleById(role_id);
+      if (!role) {
+        return res.status(400).json({
+          status: 400,
+          message: "role not found",
+        });
+      }
+      updateData.role_id = role_id;
     }
 
     await AuthRepository.update(id, updateData);
