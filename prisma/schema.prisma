@@ -321,6 +321,31 @@ model Testimonial {
   created_at   DateTime @default(now())
 }
 
+/// Schedule: jadwal kelas tersedia untuk Course Catalog & Skill Accelerator.
+/// Satu baris = satu sesi kelas pada satu tanggal (polymorphic ke Course / SkillAccelerator).
+/// `entity_id` menyimpan id tabel sumber tanpa FK (karena dua entitas berbeda).
+model Schedule {
+  id            String                @id @default(nanoid()) @db.VarChar(24)
+  entity_type   ScheduleEntityType
+  entity_id     String                @db.VarChar(24)
+  program_name  String                @default("")
+  schedule_date DateTime
+  is_active     Boolean               @default(true)
+  updated_at    DateTime              @default(now())
+  created_at    DateTime              @default(now())
+
+  @@index([entity_type])
+  @@index([entity_id])
+  @@index([schedule_date])
+  @@index([is_active])
+  @@unique([entity_type, entity_id, schedule_date])
+}
+
+enum ScheduleEntityType {
+  COURSE
+  SKILL_ACCELERATOR
+}
+
 /// Pages: konten halaman statis (About, dsb.) untuk compro.
 /// Satu baris per halaman, diidentifikasi via `code` (mis. "about").
 /// `content` menyimpan JSON utuh sesuai struktur halaman (copywriting,

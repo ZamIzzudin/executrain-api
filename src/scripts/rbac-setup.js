@@ -35,6 +35,7 @@ const MENUS = [
   { code: "catalog", label: "Catalog", path: null, icon: "layout", parent_code: null, sort_order: 3 },
   { code: "skill-accelerator", label: "Skill Accelerator", path: "/skill-accelerator", icon: "book", parent_code: "catalog", sort_order: 1 },
   { code: "course", label: "Course", path: "/course", icon: "graduation", parent_code: "catalog", sort_order: 2 },
+  { code: "schedule", label: "Schedule", path: "/schedule", icon: "calendar", parent_code: "catalog", sort_order: 3 },
   { code: "tech-solution", label: "Tech Solution", path: null, icon: "boxes", parent_code: null, sort_order: 4 },
   { code: "it-product", label: "IT Product", path: "/it-product", icon: "cpu", parent_code: "tech-solution", sort_order: 1 },
   { code: "app-development", label: "App Development", path: "/app-development", icon: "appwindow", parent_code: "tech-solution", sort_order: 2 },
@@ -188,15 +189,22 @@ async function main() {
       }
     }
 
-    // 7. Backfill user.role_id dari kolom enum lama `role`
-    const users = await client.query(`SELECT id, role FROM "User" WHERE role_id IS NULL`);
-    for (const u of users.rows) {
-      const roleName = u.role === "SUPERADMIN" ? "SUPERADMIN" : "ADMIN";
-      const rid = roleIds[roleName];
-      if (rid) {
-        await client.query(`UPDATE "User" SET role_id = $1 WHERE id = $2`, [rid, u.id]);
-        console.log(`User ${u.id} (${u.role}) -> role_id ${rid}`);
+    // 7. Backfill user.role_id dari kolom enum lama `role` (hanya bila kolom masih ada)
+    const hasRoleCol = await client.query(
+      `SELECT 1 FROM information_schema.columns WHERE table_name='User' AND column_name='role'`,
+    );
+    if (hasRoleCol.rows.length > 0) {
+      const users = await client.query(`SELECT id, role FROM "User" WHERE role_id IS NULL`);
+      for (const u of users.rows) {
+        const roleName = u.role === "SUPERADMIN" ? "SUPERADMIN" : "ADMIN";
+        const rid = roleIds[roleName];
+        if (rid) {
+          await client.query(`UPDATE "User" SET role_id = $1 WHERE id = $2`, [rid, u.id]);
+          console.log(`User ${u.id} (${u.role}) -> role_id ${rid}`);
+        }
       }
+    } else {
+      console.log("Kolom User.role lama tidak ada — skip backfill");
     }
 
     // 8. role_id NOT NULL + FK
@@ -225,7 +233,7 @@ async function main() {
         }
       } else {
         // ADMIN: beri akses menu yang sama seperti menu CMS saat ini utk role ADMIN lama
-        const adminMenus = ["home", "catalog", "skill-accelerator", "course", "tech-solution",
+        const adminMenus = ["home", "catalog", "skill-accelerator", "course", "schedule", "tech-solution",
           "it-product", "app-development", "insight", "case-studies", "article",
           "content", "master-data", "pages", "about", "skill-accelerator-page", "course-catalog-page", "tech-advisory-page", "talent-placement-page", "implementation-support-page", "ready-to-use-it-product", "custom-app-development", "technology-cloud-licensing", "case-study-page", "article-page", "home-page"];
         for (const code of adminMenus) {
