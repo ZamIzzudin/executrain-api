@@ -187,6 +187,7 @@ model AppDevelopment {
 model CaseStudy {
   id              String   @id @default(nanoid()) @db.VarChar(24)
   title           String
+  banner          Json     @default("{\"url\": \"\", \"public_id\": \"\"}")
   category        String?
   description     String
   industries      String[]
@@ -207,6 +208,7 @@ model CaseStudy {
 model Article {
   id         String   @id @default(nanoid()) @db.VarChar(24)
   title      String
+  banner     Json     @default("{\"url\": \"\", \"public_id\": \"\"}")
   category   String[]
   content    String   @db.Text
   updated_at DateTime @default(now())

@@ -151,22 +151,49 @@ const list = async (req, res) => {
         .status(400)
         .json({ status: 400, message: "month must be in YYYY-MM format" });
     }
-    if (range) {
-      // Perlebar 1 hari di tiap sisi agar range yang melintasi batas bulan
-      // tetap terdeteksi utuh (mis. 30 Sep - 2 Okt).
-      const padStart = new Date(range.start);
-      padStart.setUTCDate(padStart.getUTCDate() - 1);
-      const padEnd = new Date(range.end);
-      padEnd.setUTCDate(padEnd.getUTCDate() + 1);
-      filter.schedule_date = { gte: padStart, lte: padEnd };
+
+    if (!range) {
+      // Tanpa filter bulan → ambil semua + grouping utuh.
+      const schedules = await ScheduleRepository.findMany({
+        filter,
+        sort: [{ entity_type: "asc" }, { entity_id: "asc" }, { schedule_date: "asc" }],
+      });
+      const enriched = await enrichSchedules(schedules);
+      return res.status(200).json({
+        status: 200,
+        message: "success",
+        data: groupByRanges(enriched),
+        total_sessions: enriched.length,
+        filters: { month: month || null, entity_type: type },
+      });
     }
 
-    const schedules = await ScheduleRepository.findMany({
-      filter,
+    // Ambil kandidat schedule dalam bulan (tanpa padding) hanya untuk
+    // mengetahui entity mana yang aktif di bulan ini.
+    const candidate = await prisma.schedule.findMany({
+      where: {
+        ...filter,
+        schedule_date: { gte: range.start, lte: range.end },
+      },
+      select: { entity_type: true, entity_id: true },
+      distinct: ["entity_type", "entity_id"],
+    });
+
+    // Muat SELURUH baris dari setiap entity tsb (tanpa batas tanggal) supaya
+    // grouping range yang melintasi batas bulan (mis. 30 Sep - 3 Okt) tetap
+    // terkelompok utuh dan tidak terpotong pada padding.
+    const fullRows = await ScheduleRepository.findMany({
+      filter: {
+        ...filter,
+        OR: candidate.map((c) => ({
+          entity_type: c.entity_type,
+          entity_id: c.entity_id,
+        })),
+      },
       sort: [{ entity_type: "asc" }, { entity_id: "asc" }, { schedule_date: "asc" }],
     });
 
-    const enriched = await enrichSchedules(schedules);
+    const enriched = await enrichSchedules(fullRows);
     const allRanges = groupByRanges(enriched);
 
     // Hanya tampilkan range yang intersect bulan ini (setidaknya 1 tanggal di bulan tsb).
