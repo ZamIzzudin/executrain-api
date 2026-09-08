@@ -33,6 +33,7 @@ const productInquiry = require("./product-inquiry");
 const access = require("./access");
 const page = require("./page");
 const schedule = require("./schedule");
+const learningPath = require("./learning-path");
 
 // Health check koneksi PostgreSQL
 routes.use("/health", health);
@@ -60,5 +61,6 @@ routes.use("/product-inquiry", productInquiry);
 routes.use("/access", access);
 routes.use("/page", page);
 routes.use("/schedule", schedule);
+routes.use("/learning-path", learningPath);
 
 module.exports = routes;

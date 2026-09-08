@@ -101,17 +101,52 @@ model Course {
   @@index([created_at])
 }
 
+model LearningPath {
+  id          String   @id @default(nanoid()) @db.VarChar(24)
+  title       String
+  description String   @default("")
+  banner      Json     @default("{\"url\": \"\", \"public_id\": \"\"}")
+  framework   String // scope id framework (ai/data/auto/cyber/governance/service/pm/ea/core)
+  category    String // value FRAMEWORK_ITEM di dalam framework tsb
+  is_active   Boolean  @default(true)
+  updated_at  DateTime @default(now())
+  created_at  DateTime @default(now())
+
+  stages LearningPathStage[]
+
+  @@index([framework])
+  @@index([category])
+  @@index([created_at])
+}
+
+model LearningPathStage {
+  id              String   @id @default(nanoid()) @db.VarChar(24)
+  learning_path_id String  @db.VarChar(24)
+  name            String // scope bebas: Beginner / Expert / dll
+  description     String   @default("")
+  course_ids      String[] // id course yang masuk stage ini
+  course_links    Json      @default("[]") // [{ course_id, follows_course_id }]: course di stage ini yang merupakan lanjutan dari course di stage sebelumnya
+  sort_order      Int      @default(0)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @default(now())
+
+  learning_path LearningPath @relation(fields: [learning_path_id], references: [id], onDelete: Cascade)
+
+  @@index([learning_path_id])
+}
+
 model MasterData {
   id         String   @id @default(nanoid()) @db.VarChar(24)
   type       String
   label      String
   value      String
+  scope      String? // grup tambahan (mis. FRAMEWORK_ITEM memakai scope = ai/data/auto/...)
   sort_order Int      @default(0)
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
 
   @@unique([type, value])
-  @@index([type, sort_order])
+  @@index([type, scope, sort_order])
 }
 
 model ITProduct {
@@ -136,6 +171,7 @@ model AppDevelopment {
   title       String
   tech_stack  String[]
   description String
+  banner      Json     @default("{\"url\": \"\", \"public_id\": \"\"}")
   challenge   String?
   team_size   Json     @default("[]")
   timeline    Int      @default(0)

@@ -162,6 +162,7 @@ const create = async (req, res) => {
     title,
     tech_stack,
     description,
+    banner,
     challenge,
     team_size,
     timeline,
@@ -171,10 +172,19 @@ const create = async (req, res) => {
   } = req.body;
 
   try {
+    // Banner: ubah string URL menjadi objek { url, public_id } agar konsisten.
+    let normalizedBanner = { url: "", public_id: "" };
+    if (typeof banner === "string" && banner.trim() !== "") {
+      normalizedBanner = { url: banner, public_id: "" };
+    } else if (banner && typeof banner === "object") {
+      normalizedBanner = banner;
+    }
+
     const data = await AppDevelopmentRepository.create({
       title,
       tech_stack: tech_stack || [],
       description,
+      banner: normalizedBanner,
       challenge: challenge || null,
       team_size: normalizeTeamSize(team_size),
       timeline: timeline ? parseInt(timeline, 10) : 0,
@@ -204,6 +214,7 @@ const update = async (req, res) => {
     title,
     tech_stack,
     description,
+    banner,
     challenge,
     team_size,
     timeline,
@@ -221,10 +232,21 @@ const update = async (req, res) => {
       });
     }
 
+    // Banner: ubah string URL menjadi objek { url, public_id } agar konsisten.
+    let normalizedBanner = existing.banner;
+    if (typeof banner === "string" && banner.trim() !== "") {
+      normalizedBanner = { url: banner, public_id: "" };
+    } else if (banner && typeof banner === "object") {
+      normalizedBanner = banner;
+    } else if (banner === null) {
+      normalizedBanner = { url: "", public_id: "" };
+    }
+
     const data = await AppDevelopmentRepository.update(id, {
       title: title ?? existing.title,
       tech_stack: tech_stack ?? existing.tech_stack,
       description: description ?? existing.description,
+      banner: banner !== undefined ? normalizedBanner : existing.banner,
       challenge: challenge !== undefined ? challenge || null : existing.challenge,
       team_size:
         team_size !== undefined

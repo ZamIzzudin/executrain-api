@@ -36,6 +36,7 @@ const MENUS = [
   { code: "skill-accelerator", label: "Skill Accelerator", path: "/skill-accelerator", icon: "book", parent_code: "catalog", sort_order: 1 },
   { code: "course", label: "Course", path: "/course", icon: "graduation", parent_code: "catalog", sort_order: 2 },
   { code: "schedule", label: "Schedule", path: "/schedule", icon: "calendar", parent_code: "catalog", sort_order: 3 },
+  { code: "learning-path", label: "Learning Path", path: "/learning-path", icon: "map", parent_code: "catalog", sort_order: 4 },
   { code: "tech-solution", label: "Tech Solution", path: null, icon: "boxes", parent_code: null, sort_order: 4 },
   { code: "it-product", label: "IT Product", path: "/it-product", icon: "cpu", parent_code: "tech-solution", sort_order: 1 },
   { code: "app-development", label: "App Development", path: "/app-development", icon: "appwindow", parent_code: "tech-solution", sort_order: 2 },
@@ -233,7 +234,7 @@ async function main() {
         }
       } else {
         // ADMIN: beri akses menu yang sama seperti menu CMS saat ini utk role ADMIN lama
-        const adminMenus = ["home", "catalog", "skill-accelerator", "course", "schedule", "tech-solution",
+        const adminMenus = ["home", "catalog", "skill-accelerator", "course", "schedule", "learning-path", "tech-solution",
           "it-product", "app-development", "insight", "case-studies", "article",
           "content", "master-data", "pages", "about", "skill-accelerator-page", "course-catalog-page", "tech-advisory-page", "talent-placement-page", "implementation-support-page", "ready-to-use-it-product", "custom-app-development", "technology-cloud-licensing", "case-study-page", "article-page", "home-page"];
         for (const code of adminMenus) {

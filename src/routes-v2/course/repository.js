@@ -80,36 +80,40 @@ const CourseRepository = {
 
   /**
    * Daftar opsi filter (dari master data & enum di database) untuk dropdown publik.
-   * @returns {Promise<{categories: string[], skill_levels: string[], languages: string[], framework_types: string[]}>}
+   * - categories: item FRAMEWORK_ITEM (nilai category course) disertai scope/peg framework.
+   * - framework_types: scope yang dipakai pada FRAMEWORK_ITEM (framework course = scope).
+   * @returns {Promise<{categories: Array, skill_levels: string[], languages: string[], framework_types: Array}>}
    */
   async filters() {
-    const [categories, skill_levels, languages, frameworks] =
-      await Promise.all([
-        prisma.masterData.findMany({
-          where: { type: "COURSE_CATEGORY" },
-          orderBy: { sort_order: "asc" },
-          select: { value: true, label: true },
-        }),
-        prisma.$queryRaw`SELECT enumlabel FROM pg_enum e JOIN pg_type t ON t.oid = e.enumtypid WHERE t.typname = 'CourseLevel' ORDER BY e.enumsortorder`,
-        prisma.$queryRaw`SELECT enumlabel FROM pg_enum e JOIN pg_type t ON t.oid = e.enumtypid WHERE t.typname = 'CourseLanguage' ORDER BY e.enumsortorder`,
-        prisma.masterData.findMany({
-          where: { type: "COURSE_FRAMEWORK" },
-          orderBy: { sort_order: "asc" },
-          select: { value: true, label: true },
-        }),
-      ]);
+    const [frameworkItems, skill_levels, languages] = await Promise.all([
+      prisma.masterData.findMany({
+        where: { type: "FRAMEWORK_ITEM" },
+        orderBy: [{ scope: "asc" }, { sort_order: "asc" }],
+        select: { value: true, label: true, scope: true },
+      }),
+      prisma.$queryRaw`SELECT enumlabel FROM pg_enum e JOIN pg_type t ON t.oid = e.enumtypid WHERE t.typname = 'CourseLevel' ORDER BY e.enumsortorder`,
+      prisma.$queryRaw`SELECT enumlabel FROM pg_enum e JOIN pg_type t ON t.oid = e.enumtypid WHERE t.typname = 'CourseLanguage' ORDER BY e.enumsortorder`,
+    ]);
+
+    // Framework = scope unik dari FRAMEWORK_ITEM.
+    const scopeSet = new Set();
+    for (const it of frameworkItems) {
+      if (it.scope) scopeSet.add(it.scope);
+    }
+    const frameworks = Array.from(scopeSet).map((s) => ({
+      value: s,
+      label: s,
+    }));
 
     return {
-      categories: categories.map((r) => ({
+      categories: frameworkItems.map((r) => ({
         value: r.value,
-        label: r.label,
+        label: r.label || r.value,
+        scope: r.scope || undefined,
       })),
       skill_levels: skill_levels.map((r) => r.enumlabel),
       languages: languages.map((r) => r.enumlabel),
-      framework_types: frameworks.map((r) => ({
-        value: r.value,
-        label: r.label,
-      })),
+      framework_types: frameworks,
     };
   },
 

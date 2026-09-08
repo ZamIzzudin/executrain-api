@@ -11,16 +11,16 @@ const MasterDataRepository = {
     return prisma.masterData.findUnique({ where: { id } });
   },
 
-  findByTypeValue(type, value) {
+  findByTypeValue(type, value, scope) {
     return prisma.masterData.findFirst({
-      where: { type, value },
+      where: scope ? { type, value, scope } : { type, value },
     });
   },
 
-  findByType(type) {
+  findByType(type, scope) {
     return prisma.masterData.findMany({
-      where: { type },
-      orderBy: { sort_order: "asc" },
+      where: scope ? { type, scope } : { type },
+      orderBy: [{ scope: "asc" }, { sort_order: "asc" }],
     });
   },
 
