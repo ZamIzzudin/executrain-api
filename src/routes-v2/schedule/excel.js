@@ -3,15 +3,16 @@
 // =========================================================================
 // Excel Template & Parser utk Bulk Upload Schedule
 // =========================================================================
-// - Sheet "Template"  : kolom PROGRAM (dropdown dari MasterData),
-//                       KATEGORI (readonly), START_DATE, END_DATE.
+// - Sheet "Template"  : kolom PROGRAM (dropdown dari MasterData), START_DATE,
+//                       END_DATE. Kategori tak dipakai di sini — otomatis
+//                       diambil backend dari master data saat import.
 // - Sheet "MasterData": daftar program (title + kategori) utk referensi.
 // Parser mengembalikan array baris mentah yg siap divalidasi controller.
 // =========================================================================
 
 const ExcelJS = require("exceljs");
 
-const HEADERS = ["PROGRAM", "KATEGORI", "", "END_DATE"];
+const HEADERS = ["PROGRAM", "START DATE", "END DATE"];
 
 const MAX_ROWS = 500; // batas baris data agar aman
 
@@ -30,7 +31,6 @@ async function buildTemplateWorkbook(type, programs) {
 
   sheet.columns = [
     { header: "PROGRAM", key: "program", width: 52 },
-    { header: "KATEGORI", key: "category", width: 24 },
     { header: "START DATE", key: "start", width: 16 },
     { header: "END DATE", key: "end", width: 16 },
   ];
@@ -67,9 +67,9 @@ async function buildTemplateWorkbook(type, programs) {
     }
   }
 
-  // Data validation tanggal utk START & END
+  // Data validation tanggal utk START & END (kolom B & C)
   for (let r = 2; r <= MAX_ROWS + 1; r++) {
-    ["C", "D"].forEach((col) => {
+    ["B", "C"].forEach((col) => {
       const cell = sheet.getCell(`${col}${r}`);
       cell.dataValidation = {
         type: "date",
@@ -80,10 +80,6 @@ async function buildTemplateWorkbook(type, programs) {
       };
     });
   }
-
-  // Gaya kolom kategori (readonly) contoh
-  sheet.getCell("B2").value = "Pilih program dulu — terisi otomatis";
-  sheet.getCell("B2").font = { italic: true, color: { argb: "A0A0A0" }, size: 10 };
 
   // ---------- Sheet MasterData ----------
   const md = workbook.addWorksheet(listSheet);
@@ -111,6 +107,7 @@ async function buildTemplateWorkbook(type, programs) {
     "2. START DATE & END DATE: tulis sebagai teks YYYY-MM-DD, misal 2026-09-10.",
     "3. Satu baris = satu rentang tanggal (bisa 1 hari).",
     `4. Template utk: ${label}.`,
+    "5. Kategori program otomatis diisi sistem saat import.",
   ];
   notes.forEach((n, i) => {
     const cell = sheet.getCell(`G${i + 1}`);
@@ -151,7 +148,7 @@ function cellText(value) {
 /**
  * Parse buffer workbook.xlsx -> baris mentah.
  * @returns {{ rows: Array, errors: Array }}
- * rows: [{ rowNum, program, category, start_date, end_date }]
+ * rows: [{ rowNum, program, start_date, end_date }]
  */
 async function parseWorkbook(buffer) {
   const workbook = new ExcelJS.Workbook();
@@ -169,13 +166,12 @@ async function parseWorkbook(buffer) {
     if (rowNum < 2) return;
 
     const program = cellText(row.getCell(1).value);
-    const category = cellText(row.getCell(2).value);
-    const start_date = toDateText(row.getCell(3).value);
-    const end_date = toDateText(row.getCell(4).value);
+    const start_date = toDateText(row.getCell(2).value);
+    const end_date = toDateText(row.getCell(3).value);
 
-    if (!program && !category && !start_date && !end_date) return; // baris kosong
+    if (!program && !start_date && !end_date) return; // baris kosong
 
-    const entry = { rowNum, program, category, start_date, end_date };
+    const entry = { rowNum, program, start_date, end_date };
 
     if (!entry.program) errors.push({ rowNum, message: "PROGRAM kosong" });
     if (!entry.start_date)
