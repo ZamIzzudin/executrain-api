@@ -8,6 +8,17 @@ const ArticleRepository = require("./repository");
 const { destroy } = require("../../lib/cd");
 const { hasAzureCredentials } = require("../../config/azure-blob");
 
+/** Normalisasi banner menjadi { url, public_id } (default kosong). */
+function normalizeBanner(banner) {
+  if (!banner || typeof banner !== "object") {
+    return { url: "", public_id: "" };
+  }
+  return {
+    url: banner.url || "",
+    public_id: banner.public_id || "",
+  };
+}
+
 /**
  * Ekstrak URL gambar dari HTML konten (src dari <img>).
  * @param {string} html
@@ -83,6 +94,84 @@ const list = async (req, res) => {
   }
 };
 
+/**
+ * Public paginated list (dipakai compro).
+ * Query: ?page=&limit=&category=&search=&sort=
+ */
+const public_list = async (req, res) => {
+  try {
+    const { page, limit, category, search, sort } = req.query;
+    const result = await ArticleRepository.publicList({
+      page,
+      limit,
+      category,
+      search,
+      sort,
+    });
+
+    return res.status(200).json({
+      status: 200,
+      message: "success",
+      data: result.data,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    console.log(error.message);
+    return res.status(200).json({
+      status: 200,
+      data: [],
+      pagination: {
+        current_page: 1,
+        total_pages: 1,
+        total_products: 0,
+        per_page: 1,
+        has_next: false,
+        has_prev: false,
+      },
+      message: "No Article Found",
+    });
+  }
+};
+
+const public_detail = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const data = await ArticleRepository.findById(id);
+    if (!data) {
+      return res.status(404).json({
+        status: 404,
+        message: "Article not found",
+      });
+    }
+
+    return res.status(200).json({
+      status: 200,
+      message: "success",
+      data,
+    });
+  } catch (error) {
+    console.log(error.message);
+    return res.status(500).json({ status: 500, message: "server error" });
+  }
+};
+
+/** Opsi filter publik dari master data. */
+const public_filters = async (req, res) => {
+  try {
+    const data = await ArticleRepository.filters();
+
+    return res.status(200).json({
+      status: 200,
+      message: "success",
+      data,
+    });
+  } catch (error) {
+    console.log(error.message);
+    return res.status(500).json({ status: 500, message: "server error" });
+  }
+};
+
 const detail = async (req, res) => {
   const { id } = req.params;
 
@@ -107,11 +196,12 @@ const detail = async (req, res) => {
 };
 
 const create = async (req, res) => {
-  const { title, category, content } = req.body;
+  const { title, banner, category, content } = req.body;
 
   try {
     const data = await ArticleRepository.create({
       title,
+      banner: normalizeBanner(banner),
       category: Array.isArray(category) ? category : [],
       content: content || "",
     });
@@ -133,7 +223,7 @@ const create = async (req, res) => {
 
 const update = async (req, res) => {
   const { id } = req.params;
-  const { title, category, content } = req.body;
+  const { title, banner, category, content } = req.body;
 
   try {
     const existing = await ArticleRepository.findById(id);
@@ -148,6 +238,7 @@ const update = async (req, res) => {
 
     const data = await ArticleRepository.update(id, {
       title: title ?? existing.title,
+      banner: banner !== undefined ? normalizeBanner(banner) : existing.banner,
       category:
         category !== undefined
           ? Array.isArray(category)
@@ -212,6 +303,9 @@ const remove = async (req, res) => {
 
 module.exports = {
   list,
+  public_list,
+  public_detail,
+  public_filters,
   detail,
   create,
   update,

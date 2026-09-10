@@ -31,7 +31,8 @@ const list = async (req, res) => {
 const listByType = async (req, res) => {
   try {
     const { type } = req.params;
-    const data = await MasterDataRepository.findByType(type);
+    const { scope } = req.query;
+    const data = await MasterDataRepository.findByType(type, scope);
 
     return res.status(200).json({
       status: 200,
@@ -45,7 +46,7 @@ const listByType = async (req, res) => {
 };
 
 const create = async (req, res) => {
-  const { type, label, value, sort_order } = req.body;
+  const { type, label, value, sort_order, scope } = req.body;
 
   if (!type || !label || !value) {
     return res.status(400).json({
@@ -55,7 +56,7 @@ const create = async (req, res) => {
   }
 
   try {
-    const existing = await MasterDataRepository.findByTypeValue(type, value);
+    const existing = await MasterDataRepository.findByTypeValue(type, value, scope);
     if (existing) {
       return res.status(400).json({
         status: 400,
@@ -67,6 +68,7 @@ const create = async (req, res) => {
       type,
       label,
       value,
+      scope: scope || null,
       sort_order: sort_order !== undefined ? parseInt(sort_order, 10) : 0,
     });
 
@@ -87,7 +89,7 @@ const create = async (req, res) => {
 
 const update = async (req, res) => {
   const { id } = req.params;
-  const { type, label, value, sort_order } = req.body;
+  const { type, label, value, sort_order, scope } = req.body;
 
   try {
     const existing = await MasterDataRepository.findById(id);
@@ -103,6 +105,7 @@ const update = async (req, res) => {
       const dup = await MasterDataRepository.findByTypeValue(
         type || existing.type,
         value,
+        scope !== undefined ? scope : existing.scope,
       );
       if (dup) {
         return res.status(400).json({
@@ -116,6 +119,7 @@ const update = async (req, res) => {
       type: type ?? existing.type,
       label: label ?? existing.label,
       value: value ?? existing.value,
+      scope: scope !== undefined ? scope : existing.scope,
       sort_order:
         sort_order !== undefined
           ? parseInt(sort_order, 10)

@@ -6,6 +6,17 @@
 
 const CaseStudyRepository = require("./repository");
 
+/** Normalisasi banner menjadi { url, public_id } (default kosong). */
+function normalizeBanner(banner) {
+  if (!banner || typeof banner !== "object") {
+    return { url: "", public_id: "" };
+  }
+  return {
+    url: banner.url || "",
+    public_id: banner.public_id || "",
+  };
+}
+
 /**
  * Normalisasi team_size: pastikan array objek { quantity, type }.
  */
@@ -174,6 +185,7 @@ const detail = async (req, res) => {
 const create = async (req, res) => {
   const {
     title,
+    banner,
     category,
     description,
     industries,
@@ -190,6 +202,7 @@ const create = async (req, res) => {
   try {
     const data = await CaseStudyRepository.create({
       title,
+      banner: normalizeBanner(banner),
       category: category || null,
       description,
       industries: industries || [],
@@ -222,6 +235,7 @@ const update = async (req, res) => {
   const { id } = req.params;
   const {
     title,
+    banner,
     category,
     description,
     industries,
@@ -246,6 +260,7 @@ const update = async (req, res) => {
 
     const data = await CaseStudyRepository.update(id, {
       title: title ?? existing.title,
+      banner: banner !== undefined ? normalizeBanner(banner) : existing.banner,
       category:
         category !== undefined ? category || null : existing.category,
       description: description ?? existing.description,

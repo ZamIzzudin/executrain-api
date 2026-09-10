@@ -26,14 +26,6 @@ const DEFAULT_SEED = [
   ["SKILL_CATEGORY", "PROJECT_MANAGEMENT", "Project Management"],
   ["SKILL_CATEGORY", "LEADERSHIP", "Leadership"],
   ["SKILL_CATEGORY", "EMOTIONAL_INTELLIGENCE", "Emotional Intelligence"],
-  ["COURSE_CATEGORY", "IT_TRAINING", "IT Training"],
-  ["COURSE_CATEGORY", "DATA_ANALYTICS", "Data Analytics"],
-  ["COURSE_CATEGORY", "AUTOMATION", "Automation"],
-  ["COURSE_CATEGORY", "CYBERSECURITY", "Cybersecurity"],
-  ["COURSE_CATEGORY", "PROJECT_MANAGEMENT", "Project Management"],
-  ["COURSE_CATEGORY", "LEADERSHIP", "Leadership"],
-  ["COURSE_CATEGORY", "EMOTIONAL_INTELLIGENCE", "Emotional Intelligence"],
-  ["COURSE_FRAMEWORK", "Training", "Training"],
 ];
 
 (async () => {
@@ -64,6 +56,15 @@ const DEFAULT_SEED = [
   await pool.query(`
     CREATE INDEX IF NOT EXISTS "MasterData_type_sort_order_idx"
       ON "MasterData" (type, sort_order);
+  `);
+  // Kolom scope (grup tambahan, mis. FRAMEWORK_ITEM pakai scope = ai/data/auto/...)
+  await pool.query(`
+    ALTER TABLE "MasterData"
+      ADD COLUMN IF NOT EXISTS scope text;
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS "MasterData_type_scope_sort_order_idx"
+      ON "MasterData" (type, scope, sort_order);
   `);
   console.log("Tabel MasterData siap");
 
