@@ -21,3 +21,5 @@ scripts/pgdata/
 .DS_Store
 .idea/
 .vscode/
+
+backups/
