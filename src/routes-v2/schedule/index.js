@@ -8,6 +8,7 @@ const {
   options,
   detail,
   public_dates,
+  public_list,
   add,
   add_bulk,
   add_range,
@@ -25,6 +26,7 @@ const {
 } = require("./import-controller");
 
 // Public (compro) — tanpa auth
+schedule.get("/public/list", public_list);
 schedule.get("/public/:type/:entityId", public_dates);
 
 // Admin CMS

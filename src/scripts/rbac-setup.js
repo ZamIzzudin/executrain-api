@@ -49,6 +49,7 @@ const MENUS = [
   { code: "about", label: "About", path: "/about", icon: "info", parent_code: "pages", sort_order: 1 },
   { code: "skill-accelerator-page", label: "Skill Accelerator", path: "/skill-accelerator-page", icon: "zap", parent_code: "pages", sort_order: 2 },
   { code: "course-catalog-page", label: "Course Catalog", path: "/course-catalog-page", icon: "graduation-cap", parent_code: "pages", sort_order: 3 },
+  { code: "schedule-page", label: "Schedule", path: "/schedule-page", icon: "calendar-days", parent_code: "pages", sort_order: 12 },
   { code: "tech-advisory-page", label: "Tech Advisory", path: "/tech-advisory-page", icon: "compass", parent_code: "pages", sort_order: 4 },
   { code: "talent-placement-page", label: "IT Talent Placement", path: "/talent-placement-page", icon: "users-round", parent_code: "pages", sort_order: 5 },
   { code: "implementation-support-page", label: "Implementation & Support", path: "/implementation-support-page", icon: "life-buoy", parent_code: "pages", sort_order: 6 },
