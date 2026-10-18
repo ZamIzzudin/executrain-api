@@ -4,6 +4,9 @@
   "description": "ExecuTrain API (Express + PostgreSQL/Prisma)",
   "license": "ISC",
   "main": "server.js",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
@@ -18,13 +21,13 @@
     "db:sync-dev": "node src/scripts/create-dev-db.js",
     "db:studio:dev": "node src/scripts/run-prisma-dev.js prisma studio",
     "db:push:dev": "node src/scripts/run-prisma-dev.js prisma db push",
-    "build": "node --check server.js && node --check src/config/prisma.js && prisma generate && echo \"API build OK (Express)\""
+    "build": "node --check server.js && node --check api/index.js && node --check src/app.js && node --check src/config/prisma.js && prisma generate && echo \"API build OK (Express)\""
   },
   "dependencies": {
     "@azure/storage-blob": "^12.33.0",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
-    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
     "body-parser": "^2.2.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",

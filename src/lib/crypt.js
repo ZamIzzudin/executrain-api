@@ -1,6 +1,6 @@
 /** @format */
 
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 
 async function encrpyt_one_way(data) {
   const salt = await bcrypt.genSalt();

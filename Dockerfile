@@ -44,6 +44,7 @@ COPY --from=build --chown=app:app /app/node_modules ./node_modules
 # Copy aplikasi
 COPY --chown=app:app server.js ./
 COPY --chown=app:app src ./src
+COPY --chown=app:app api ./api
 COPY --chown=app:app prisma ./prisma
 COPY --chown=app:app prisma.config.ts ./
 

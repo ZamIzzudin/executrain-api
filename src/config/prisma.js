@@ -16,11 +16,18 @@ const { Pool } = require("pg");
 
 const connectionString = require("./var").DATABASE_URL;
 
+// Di serverless (Vercel) setiap instance punya pool sendiri, jadi jumlah
+// koneksi dipertahankan kecil (max:1) agar tidak menghabiskan koneksi Postgres.
+// Di container long-running (VPS) pool lebih besar agar throughput tinggi.
+// Vercel menetapkan VERCEL=1; bandingkan ketat agar VERCEL=0/.env tidak salah deteksi.
+const isServerless =
+  process.env.VERCEL === "1" || process.env.VERCEL === "true";
+
 const pool = new Pool({
   connectionString,
-  max: 10,
-  min: 2,
-  idleTimeoutMillis: 30000,
+  max: isServerless ? 1 : 10,
+  ...(isServerless ? {} : { min: 2 }),
+  idleTimeoutMillis: isServerless ? 10000 : 30000,
 });
 
 const adapter = new PrismaPg(pool);
@@ -69,11 +76,10 @@ function createPrismaClient() {
   });
 }
 
+// Selalu cache di globalThis: di serverless hal ini menjaga instance yang sama
+// selama container hangat sehingga pool tidak dibuat berulang tiap invocation.
 const prisma = globalForPrisma.__prisma || createPrismaClient();
-
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.__prisma = prisma;
-}
+globalForPrisma.__prisma = prisma;
 
 async function disconnectPrisma() {
   try {
@@ -85,15 +91,20 @@ async function disconnectPrisma() {
   }
 }
 
-process.on("beforeExit", disconnectPrisma);
-process.on("SIGINT", async () => {
-  await disconnectPrisma();
-  process.exit(0);
-});
-process.on("SIGTERM", async () => {
-  await disconnectPrisma();
-  process.exit(0);
-});
+// Di serverless, event loop bisa kosong antar-invocation lalu container
+// dipakai ulang. Memanggil pool.end() lewat beforeExit akan merusak pool yang
+// di-cache, jadi handler shutdown hanya dipasang utk container long-running.
+if (!isServerless) {
+  process.on("beforeExit", disconnectPrisma);
+  process.on("SIGINT", async () => {
+    await disconnectPrisma();
+    process.exit(0);
+  });
+  process.on("SIGTERM", async () => {
+    await disconnectPrisma();
+    process.exit(0);
+  });
+}
 
 module.exports = prisma;
 module.exports.prisma = prisma;
